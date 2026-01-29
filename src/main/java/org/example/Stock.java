@@ -1,17 +1,17 @@
 package org.example;
 
-public class Stock {
-    private String exchange;
+public class Stock extends Asset {
+    private String entreprise;
 
-    public Stock(String exchange) {
-        this.exchange = exchange;
+
+    public Stock(String code, String nom, double prix, String entreprise) {
+        super(code, nom, prix);
+        this.entreprise = entreprise;
     }
 
-    public String getNomDuEntreprise() {
-        return exchange;
-    }
 
-    public void setNomDuEntreprise(String exchange) {
-        this.exchange = exchange;
+    @Override
+    public String getType() {
+        return "ACTION";
     }
 }

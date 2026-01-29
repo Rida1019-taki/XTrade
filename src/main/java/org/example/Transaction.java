@@ -1,49 +1,27 @@
 package org.example;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+
 
 public class Transaction {
-    private Date date;
     private String type;
-    private double price;
-    private int quantity;
+    private Asset asset;
+    private int quantite;
+    private double prix;
+    private LocalDateTime date;
 
-    public Transaction(Date date, String type, double price, int quantity) {
-        this.date = date;
+
+    public Transaction(String type, Asset asset, int quantite, double prix) {
         this.type = type;
-        this.price = price;
-        this.quantity = quantity;
+        this.asset = asset;
+        this.quantite = quantite;
+        this.prix = prix;
+        this.date = LocalDateTime.now();
     }
 
-    public Date getDate() {
-        return date;
-    }
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    @Override
+    public String toString() {
+        return type + " | " + asset.getNom() + " | qte=" + quantite + " | prix=" + prix + " | " + date;
     }
 }
