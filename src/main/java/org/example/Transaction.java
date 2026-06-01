@@ -1,70 +1,35 @@
 package org.example;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class Transaction {
 
+    private String type;
     private Trader trader;
     private Asset asset;
-    private String type;
-    private int quantity;
-    private double montant;
-    private LocalDateTime date;
+    private int quantite;
+    private LocalDate date;
 
-    public Transaction(Trader trader, Asset asset, String type,
-                       int quantity, double montant, LocalDateTime date) {
-
-        if (!type.equals("BUY") && !type.equals("SELL"))
-            throw new IllegalArgumentException("Type doit être BUY ou SELL");
-
-        if (quantity <= 0)
-            throw new IllegalArgumentException("Quantité invalide");
-
-        if (montant <= 0)
-            throw new IllegalArgumentException("Montant invalide");
-
+    public Transaction(String type, Trader trader, Asset asset, int quantite) {
+        this.type = type;
         this.trader = trader;
         this.asset = asset;
-        this.type = type;
-        this.quantity = quantity;
-        this.montant = montant;
-        this.date = date;
+        this.quantite = quantite;
+        this.date = LocalDate.now();
     }
 
-    // ===== Getters =====
-    public Trader getTrader() {
-        return trader;
-    }
-
-    public Asset getAsset() {
-        return asset;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public double getMontant() {
-        return montant;
-    }
-
-    public LocalDateTime getDate() {
-        return date;
-    }
+    public String getType() { return type; }
+    public Trader getTrader() { return trader; }
+    public Asset getAsset() { return asset; }
+    public int getQuantite() { return quantite; }
+    public LocalDate getDate() { return date; }
 
     @Override
     public String toString() {
-        return "Transaction{" +
-                "trader=" + trader.getNomcomplet() +
-                ", asset=" + asset.getNom() +
-                ", type='" + type + '\'' +
-                ", quantity=" + quantity +
-                ", montant=" + montant +
-                ", date=" + date +
-                '}';
+        return type + " | " + trader.getNomcomplet() + " | "
+                + asset.getCode() + " | QTE: " + quantite
+                + " | Date: " + date;
     }
 }
+
+

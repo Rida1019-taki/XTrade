@@ -1,147 +1,186 @@
 package org.example;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TradingPlatform {
 
-    private List<Transaction> transactions = new ArrayList<>();
     private List<Trader> traders = new ArrayList<>();
     private List<Asset> assets = new ArrayList<>();
+    private List<Transaction> transactions = new ArrayList<>();
 
+    public void ajouterTrader(Trader t) { traders.add(t); }
+    public void ajouterActif(Asset a) { assets.add(a); }
 
-    public void ajouterTrader(Trader trader) {
-        traders.add(trader);
+    private Trader findTrader(int id) {
+        return traders.stream()
+                .filter(t -> t.getId() == id)
+                .findFirst()
+                .orElseThrow();
     }
 
-    public void ajouterAsset(Asset asset) {
-        assets.add(asset);
+    private Asset findAsset(String code) {
+        return assets.stream()
+                .filter(a -> a.getCode().equals(code))
+                .findFirst()
+                .orElseThrow();
     }
 
-    public void ajouterTransaction(Transaction transaction) {
-        transactions.add(transaction);
+    public void afficherActifs() {
+        for (Asset a : assets) {
+            System.out.println(a.getCode() + " | " + a.getNom() + " | " + a.getPrix());
+        }
+    }
+    public void acheterActif(int idTrader, String codeActif, int qte) {
+        Trader t = findTrader(idTrader);
+        Asset a = findAsset(codeActif);
+
+        double montant = a.getPrix() * qte;
+        if (t.getSolde() < montant)
+            throw new IllegalArgumentException("Solde insuffisant");
+
+        t.debiter(montant);
+        t.getPortfolio().ajouter(a, qte);
+        transactions.add(new Transaction("ACHAT", t, a, qte));
     }
 
-    public List<Transaction> getTransactions() {
-        return transactions;
+    public void vendreActif(int idTrader, String codeActif, int qte) {
+        Trader t = findTrader(idTrader);
+        Asset a = findAsset(codeActif);
+
+        t.getPortfolio().retirer(a, qte);
+        t.crediter(a.getPrix() * qte);
+        transactions.add(new Transaction("VENTE", t, a, qte));
     }
 
+    public void afficherHistorique() {
+        transactions.forEach(System.out::println);
+    }
 
-    public List<Transaction> transactionsParTrader(Trader trader) {
+    public void consulterPortefeuille(int idTrader) {
+        Trader t = findTrader(idTrader);
+        t.getPortfolio().getActifs()
+                .forEach( (a, q)
+                        -> System.out.println(a.getNom() + " : " + q) );
+        System.out.println("Valeur totale = " + t.getPortfolio().calculerValeurTotale());
+    }
+
+    public void changerPrixAsset(String codeActif, double nouveauPrix) {
+        if (nouveauPrix <= 0) throw new IllegalArgumentException("Prix invalide");
+        Asset a = findAsset(codeActif); a.setPrix(nouveauPrix);
+        System.out.println("Prix de l'actif " + a.getNom() + " changé à " + nouveauPrix);
+    }
+
+    public Trader getTraderById(int id) {
+        return traders.stream()
+                .filter(t -> t.getId() == id)
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Trader non trouvé"));
+    }
+
+    public Asset getAssetByCode(String code) {
+        return assets.stream()
+                .filter(a -> a.getCode().equalsIgnoreCase(code))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Actif non trouvé"));
+    }
+
+    public void ajouterTransaction(Transaction t) {
+        transactions.add(t);
+    }
+
+    public List<Transaction> getTransactionsByTrader(int idTrader) {
         return transactions.stream()
-                .filter(t -> t.getTrader().equals(trader))
+                .filter(t -> t.getTrader().getId() == idTrader)
                 .toList();
     }
 
-    public List<Transaction> filtrerParType(String type) {
+    public List<Transaction> filterByType(String type) {
         return transactions.stream()
-                .filter(t -> t.getType().equals(type))
+                .filter(t -> t.getType().equalsIgnoreCase(type))
                 .toList();
     }
 
-    public List<Transaction> filtrerParAsset(Asset asset) {
+    public List<Transaction> filterByAsset(String codeActif) {
         return transactions.stream()
-                .filter(t -> t.getAsset().equals(asset))
+                .filter(t -> t.getAsset().getCode().equalsIgnoreCase(codeActif))
                 .toList();
     }
 
-    public List<Transaction> filtrerParDate(LocalDateTime debut, LocalDateTime fin) {
+    public List<Transaction> filterByDate(LocalDate start, LocalDate end) {
         return transactions.stream()
-                .filter(t -> !t.getDate().isBefore(debut)
-                        && !t.getDate().isAfter(fin))
+                .filter(t -> !t.getDate().isBefore(start)
+                        && !t.getDate().isAfter(end))
                 .toList();
     }
 
-    public List<Transaction> trierParDate() {
+    public List<Transaction> sortByDate() {
         return transactions.stream()
                 .sorted(Comparator.comparing(Transaction::getDate))
                 .toList();
     }
 
-    public List<Transaction> trierParMontant() {
+    public List<Transaction> sortByMontant() {
         return transactions.stream()
-                .sorted(Comparator.comparing(Transaction::getMontant))
+                .sorted(Comparator.comparingDouble(
+                        t -> t.getAsset().getPrix() * t.getQuantite()
+                ))
                 .toList();
     }
 
-
-    public Map<Asset, Integer> volumeParAsset() {
+    public Map<String, Double> volumeParActif() {
         return transactions.stream()
                 .collect(Collectors.groupingBy(
-                        Transaction::getAsset,
-                        Collectors.summingInt(Transaction::getQuantity)
+                        t -> t.getAsset().getCode(),
+                        Collectors.summingDouble(
+                                t -> t.getAsset().getPrix() * t.getQuantite()
+                        )
                 ));
     }
 
-    public double montantTotalParType(String type) {
+    public Map<String, Double> totalBuySell() {
         return transactions.stream()
-                .filter(t -> t.getType().equals(type))
-                .mapToDouble(Transaction::getMontant)
+                .collect(Collectors.groupingBy(
+                        Transaction::getType,
+                        Collectors.summingDouble(
+                                t -> t.getAsset().getPrix() * t.getQuantite()
+                        )
+                ));
+    }
+
+    public double getVolumeByTrader(int idTrader) {
+        return transactions.stream()
+                .filter(t -> t.getTrader().getId() == idTrader)
+                .mapToDouble(t ->
+                        t.getAsset().getPrix() * t.getQuantite()
+                )
                 .sum();
     }
 
-
-    public Map<Trader, Integer> volumeParTrader() {
+    public long getNombreOrdresByTrader(int idTrader) {
         return transactions.stream()
-                .collect(Collectors.groupingBy(
-                        Transaction::getTrader,
-                        Collectors.summingInt(Transaction::getQuantity)
-                ));
+                .filter(t -> t.getTrader().getId() == idTrader)
+                .count();
     }
 
-    public Map<Trader, Long> nombreOrdresParTrader() {
-        return transactions.stream()
-                .collect(Collectors.groupingBy(
-                        Transaction::getTrader,
-                        Collectors.counting()
-                ));
-    }
-
-    public List<Map.Entry<Trader, Integer>> topNTraders(int n) {
-        return volumeParTrader().entrySet().stream()
-                .sorted(Map.Entry.<Trader, Integer>comparingByValue().reversed())
+    public List<Trader> getTopTraders(int n) {
+        return traders.stream()
+                .sorted((t1, t2) -> Double.compare(
+                        getVolumeByTrader(t2.getId()),
+                        getVolumeByTrader(t1.getId())
+                ))
                 .limit(n)
                 .toList();
     }
 
 
-
-    public Optional<Asset> assetLePlusEchange() {
-        return volumeParAsset().entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey);
+    public Optional<Map.Entry<String, Double>> instrumentPlusEchange() {
+        return volumeParActif().entrySet()
+                .stream()
+                .max(Map.Entry.comparingByValue());
     }
-
-    public double totalBuy() {
-        return montantTotalParType("BUY");
-    }
-
-    public double totalSell() {
-        return montantTotalParType("SELL");
-    }
-
-    public List<String> zjzdnbz(){
-        return assets.stream()
-                .filter(t -> t.getPrix() > 100)
-                .map(r -> r.getNom())
-                .toList();
-    }
-    public Integer zfzdv(){
-        List<Integer> list = new ArrayList<>();
-        list.add(1);
-        return list.stream().filter(f -> f % 2 == 0).mapToInt(r -> r).sum();
-    }
-
-    public List<String> vefvef(){
-        List<String> csc = List.of("ffve" , "jkebfek");
-        return csc.stream().filter(r -> r.length() > 4).toList();
-    }
-    public List<String> cc(){
-        List<String> cf = new ArrayList<>();
-        cf.add("jefbejb");
-        return cf.stream().filter(e -> e.startsWith("j")).toList();
-    }
-
 }
 

@@ -7,7 +7,9 @@ public class Trader extends Person {
 
     public Trader(String nom, double solde) {
         super(nom);
-        if (solde <= 0) throw new IllegalArgumentException("Solde invalide");
+        if (solde <= 0)
+            throw new IllegalArgumentException("Solde invalide");
+
         this.solde = solde;
         this.portfolio = new Portfolio<>();
     }
@@ -27,5 +29,11 @@ public class Trader extends Person {
     public Portfolio<Asset> getPortfolio() {
         return portfolio;
     }
+
+    @Override
+    public String toString() {
+        return getId() + " - " + getNomcomplet() + " | Solde: " + solde;
+    }
 }
+
 

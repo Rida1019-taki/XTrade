@@ -1,116 +1,184 @@
 package org.example;
 
-import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        TradingPlatform platform = new TradingPlatform();
         Scanner sc = new Scanner(System.in);
+        TradingPlatform platform = new TradingPlatform();
 
-        Trader trader1 = new Trader("Ahmed", 10000);
-        Trader trader2 = new Trader("Sara", 15000);
-        platform.ajouterTrader(trader1);
-        platform.ajouterTrader(trader2);
+        int choix = -1;
 
-        Asset apple = new Stock("AAPL", "Apple", 150);
-        Asset bitcoin = new CryptoCurrency("BTC", "Bitcoin", 30000);
-        platform.ajouterAsset(apple);
-        platform.ajouterAsset(bitcoin);
+        while (choix != 0) {
 
-        int choix;
-
-        do {
-            System.out.println("\n===== Xtraid =====");
-            System.out.println("1. Ajouter une transaction");
-            System.out.println("2. Afficher transactions d’un trader");
-            System.out.println("3. Afficher transactions BUY");
-            System.out.println("4. Afficher transactions SELL");
-            System.out.println("5. Volume par trader");
-            System.out.println("6. Top N traders");
-            System.out.println("7. Asset le plus échangé");
+            System.out.println("\n========= XTRADE MENU =========");
+            System.out.println("1. Ajouter Trader");
+            System.out.println("2. Ajouter Actif");
+            System.out.println("3. Ajouter Transaction");
+            System.out.println("4. Transactions d’un Trader");
+            System.out.println("5. Filtrer par Type (BUY/SELL)");
+            System.out.println("6. Filtrer par Actif");
+            System.out.println("7. Trier par Date");
+            System.out.println("8. Trier par Montant");
+            System.out.println("9. Volume total par Actif");
+            System.out.println("10. Total BUY / SELL");
+            System.out.println("11. Volume d’un Trader");
+            System.out.println("12. Nombre d’ordres d’un Trader");
+            System.out.println("13. Top N Traders");
+            System.out.println("14. Instrument le plus échangé");
             System.out.println("0. Quitter");
-            System.out.print("Votre choix : ");
+            System.out.print("Choix : ");
 
             choix = sc.nextInt();
 
-            switch (choix) {
+            try {
 
-                case 1 -> {
-                    System.out.print("Trader : ");
-                    int t = sc.nextInt();
-                    Trader trader = (t == 1) ? trader1 : trader2;
+                switch (choix) {
 
-                    System.out.print("Asset (1=AAPL, 2=BTC) : ");
-                    int a = sc.nextInt();
-                    Asset asset = (a == 1) ? apple : bitcoin;
+                    case 1 -> {
+                        System.out.print("Nom : ");
+                        String nom = sc.next();
+                        System.out.print("Solde initial : ");
+                        double solde = sc.nextDouble();
 
-                    System.out.print("Type (BUY/SELL) : ");
-                    String type = sc.next();
+                        platform.ajouterTrader(new Trader(nom, solde));
+                        System.out.println("Trader ajouté.");
+                    }
 
-                    System.out.print("Quantité : ");
-                    int qty = sc.nextInt();
+                    case 2 -> {
+                        System.out.print("Code : ");
+                        String code = sc.next();
+                        System.out.print("Nom : ");
+                        String nom = sc.next();
+                        System.out.print("Prix : ");
+                        double prix = sc.nextDouble();
+                        System.out.print("Type (1=Stock, 2=Crypto) : ");
+                        int type = sc.nextInt();
 
-                    System.out.print("Montant : ");
-                    double montant = sc.nextDouble();
+                        if (type == 1)
+                            platform.ajouterActif(new Stock(code, nom, prix));
+                        else
+                            platform.ajouterActif(new CryptoCurrency(code, nom, prix));
 
-                    Transaction transaction = new Transaction(
-                            trader,
-                            asset,
-                            type,
-                            qty,
-                            montant,
-                            LocalDateTime.now()
-                    );
+                        System.out.println("Actif ajouté avec succès.");
+                    }
 
-                    platform.ajouterTransaction(transaction);
-                    System.out.println("Transaction ajoutée !");
-                }
+                    case 3 -> {
+                        System.out.print("Type (BUY/SELL) : ");
+                        String type = sc.next();
+                        System.out.print("ID Trader : ");
+                        int id = sc.nextInt();
+                        System.out.print("Code Actif : ");
+                        String code = sc.next();
+                        System.out.print("Quantité : ");
+                        int qte = sc.nextInt();
 
-                case 2 -> {
-                    System.out.print("Trader : ");
-                    int t = sc.nextInt();
-                    Trader trader = (t == 1) ? trader1 : trader2;
+                        Trader trader = platform.getTraderById(id);
+                        Asset asset = platform.getAssetByCode(code);
 
-                    platform.transactionsParTrader(trader)
-                            .forEach(System.out::println);
-                }
-
-                case 3 -> platform.filtrerParType("BUY")
-                        .forEach(System.out::println);
-
-                case 4 -> platform.filtrerParType("SELL")
-                        .forEach(System.out::println);
-
-                case 5 -> platform.volumeParTrader()
-                        .forEach((trader, volume) ->
-                                System.out.println(trader.getNomcomplet() + " -> " + volume)
+                        platform.ajouterTransaction(
+                                new Transaction(type, trader, asset, qte)
                         );
 
-                case 6 -> {
-                    System.out.print("Donner N : ");
-                    int n = sc.nextInt();
-                    platform.topNTraders(n)
-                            .forEach(e ->
-                                    System.out.println(e.getKey().getNomcomplet() + " : " + e.getValue())
-                            );
+                        System.out.println("Transaction ajoutée.");
+                    }
+
+                    case 4 -> {
+                        System.out.print("ID Trader : ");
+                        int id = sc.nextInt();
+                        platform.getTransactionsByTrader(id)
+                                .forEach(System.out::println);
+                    }
+
+                    case 5 -> {
+                        System.out.print("Type (BUY/SELL) : ");
+                        String type = sc.next();
+                        platform.filterByType(type)
+                                .forEach(System.out::println);
+                    }
+
+                    case 6 -> {
+                        System.out.print("Code Actif : ");
+                        String code = sc.next();
+                        platform.filterByAsset(code)
+                                .forEach(System.out::println);
+                    }
+
+                    case 7 ->
+                            platform.sortByDate()
+                                    .forEach(System.out::println);
+
+                    case 8 ->
+                            platform.sortByMontant()
+                                    .forEach(System.out::println);
+
+                    case 9 -> {
+                        System.out.println("=== Volume par Actif ===");
+                        for (Map.Entry<String, Double> e :
+                                platform.volumeParActif().entrySet()) {
+                            System.out.println(e.getKey() + " -> " + e.getValue());
+                        }
+                    }
+
+                    case 10 -> {
+                        System.out.println("=== Total BUY / SELL ===");
+                        for (Map.Entry<String, Double> e :
+                                platform.totalBuySell().entrySet()) {
+                            System.out.println(e.getKey() + " -> " + e.getValue());
+                        }
+                    }
+
+                    case 11 -> {
+                        System.out.print("ID Trader : ");
+                        int id = sc.nextInt();
+                        System.out.println("Volume = "
+                                + platform.getVolumeByTrader(id));
+                    }
+
+                    case 12 -> {
+                        System.out.print("ID Trader : ");
+                        int id = sc.nextInt();
+                        System.out.println("Nombre ordres = "
+                                + platform.getNombreOrdresByTrader(id));
+                    }
+
+                    case 13 -> {
+                        System.out.print("N : ");
+                        int n = sc.nextInt();
+                        platform.getTopTraders(n)
+                                .forEach(t ->
+                                        System.out.println(
+                                                t.getNomcomplet() +
+                                                        " -> " +
+                                                        platform.getVolumeByTrader(t.getId())
+                                        )
+                                );
+                    }
+
+                    case 14 -> {
+                        platform.instrumentPlusEchange()
+                                .ifPresent(e ->
+                                        System.out.println(
+                                                "Instrument: "
+                                                        + e.getKey()
+                                                        + " | Volume: "
+                                                        + e.getValue()
+                                        ));
+                    }
+
+                    case 0 -> System.out.println("Au revoir 👋");
+
+                    default -> System.out.println("Choix invalide !");
                 }
 
-                case 7 -> platform.assetLePlusEchange()
-                        .ifPresent(asset ->
-                                System.out.println("Asset le plus echange : " + asset.getNom())
-                        );
-
-                case 0 -> System.out.println("Au revoir !");
-
-                default -> System.out.println("Choix invalide");
+            } catch (Exception e) {
+                System.out.println("Erreur : " + e.getMessage());
             }
-
-        } while (choix != 0);
+        }
 
         sc.close();
     }
 }
-
